@@ -1,75 +1,29 @@
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// get argurmentos 
-const args = process.argv.slice(2);
-const [command, id] = args[1].split('/'); // Split 'productos/20' into ['productos', '20']
+import AuthRoutes from './routes/auth.routes.js';
+import ProductRoutes from './routes/productos.routes.js';
 
-const apiUrl = 'https://fakestoreapi.com';
+import dotenv from 'dotenv';
+dotenv.config();
 
-console.log('Argumentos:', args);
-async function getProductos() {
-    fetch(`${apiUrl}/products`)
-        .then(response => response.json())
-        .then(data => console.log(data));
-}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-async function getProductoById(id) {
-    fetch(`${apiUrl}/products/${id}`)
-        .then(response => response.json())
-        .then(data => console.log(data));
-}
+const app = express();
 
-async function postProducto(){
-      const [, , nombre, precio, categoria] = args
-      console.log(nombre, precio, categoria);
-     fetch(`${apiUrl}/products`, {
-         method: 'POST',
-         body: JSON.stringify({
-             title: nombre,
-             price: precio,
-             category: categoria
-         })
-     })
-     .then(response => response.json())
-     .then(data => console.log(data));
+app.listen( process.env.PORT || 3000, () => {
+    console.log(`Servidor escuchando en http://localhost:${process.env.PORT || 3000}`);
+});
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-}
+// app.use(express.static(path.join(__dirname, 'public')));
 
-async function deleteProductoById(id) {
-    fetch(`${apiUrl}/products/${id}`, {
-        method: 'DELETE'
-    })
-    .then(response => response.json())
-    .then(data => console.log(data));
-}
- 
-switch (args[0]) {
-    case 'GET':
-        if (command === 'products' && !id) {
-            getProductos();
-        } else if (command === 'products' && id) {
-            getProductoById(id);
-        } else {
-            console.error('Unknown GET command');
-            process.exit(1);
-        }
-        break;
-    case 'POST':
-        if (args[1] === 'products') {
-            postProducto();
-        }else{
-            console.error('Unknown POST command');
-            process.exit(1);
-        }
-        break;
-    case 'DELETE':
-        if (command === 'products' && id) {
-            deleteProductoById(id);
-        } else {
-            console.error('Falta id. No se pudo eliminar el producto');
-            process.exit(1);
-        }
-        break;
-    default:
-        console.error('Unknown command');
-        process.exit(1);
-}
+app.use('/api', ProductRoutes);
+app.use('/api/auth', AuthRoutes);
+
+app.get('/', (req, res) => {
+    res.json({ message: 'Bienvenido a la API de Productos' });
+});
